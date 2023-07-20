@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required : [true, "Please provide your email"],
+        required: [true, "Please provide your email"],
         unique: true,
         lowercase: true,
     },
@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
         type: {
             type: String,
             enum: ["user", "admin"],
-            default: "user"
+            default: "user",
         },
         password: {
             type: String,
@@ -25,11 +25,11 @@ const userSchema = new mongoose.Schema({
         passwordConfirm: {
             type: String,
             required: [true, "please confirm your password"],
-            Validate:{
-                validator: function(el){
+            Validate: {
+                validator: function (el) {
                     return el === this.password;
                 },
-                message: "password not the same"
+                message: "password not the same",
             },
         },
     },
@@ -45,31 +45,36 @@ userSchema.pre("save", async function (next) {
     next();
 });
 
-userSchema.pre("save", function(next){
-    if (!this.isModified("password") || this.isNew ) return next();
+userSchema.pre("save", function (next) {
+    if (!this.isModified("password") || this.isNew) return next();
 
     this.passwordChangedAt = Date.now() - 1000;
 
     next();
 });
 
-userSchema.pre(/^find/, function(next){
-    this.find({active: {$ne: false}});
+userSchema.pre(/^find/, function (next) {
+    this.find({ active: { $ne: false } });
     next();
 });
 
-
-userSchema.method.correctPassword = async function(candidatePassword, userPassword){
+userSchema.method.correctPassword = async function (
+    candidatePassword,
+    userPassword
+) {
     return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.method.changedPasswordAfter = function(JWTTimestamp){
-    if (this.passwordChangedAt){
-        const changedTimeStamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+userSchema.method.changedPasswordAfter = function (JWTTimestamp) {
+    if (this.passwordChangedAt) {
+        const changedTimeStamp = parseInt(
+            this.passwordChangedAt.getTime() / 1000,
+            10
+        );
         return JWTTimestamp < changedTimeStamp;
     }
 
-    return false
+    return false;
 };
 
 const user = mongoose.model("user", userSchema);
